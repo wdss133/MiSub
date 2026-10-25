@@ -1,0 +1,32 @@
+name: sync-upstream-auto
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-upstream-auto
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Merge upstream
+        run: |
+          git config user.name "sync-bot"
+          git config user.email "sync-bot@users.noreply.github.com"
+          git remote add upstream https://github.com/imzyb/MiSub.git || true
+          git fetch upstream main
+          git merge --no-edit upstream/main || echo "::warning::merge conflict, manual fix needed"
+
+      - name: Push
+        run: git push || echo "nothing to push"
